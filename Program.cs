@@ -43,7 +43,11 @@ builder.Services.AddTransient<IResend, ResendClient>();
 // Setup Authentication/Authorization
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
-builder.Services.AddIdentityCore<User>()
+builder.Services.AddIdentityCore<User>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = true;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
 
@@ -98,7 +102,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGroup("/auth").MapIdentityApi<User>();
+app.MapIdentityApi<User>();
 app.MapGet("/", () => "QuestLog");
 app.MapCustomAuthEndpoints();
 
