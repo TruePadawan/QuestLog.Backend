@@ -165,6 +165,39 @@ public static class CustomAuthEndpoints
             })
             .Produces(400)
             .Produces(200);
+
+        authGroup.MapPost("/resetPassword",
+                async Task<IResult> (ResetPasswordRequest request, UserManager<User> userManager) =>
+                {
+                    var user = await userManager.FindByEmailAsync(request.Email);
+                    if (user == null)
+                    {
+                        return TypedResults.BadRequest();
+                    }
+
+                    string token;
+                    try
+                    {
+                        var decodedBytes = WebEncoders.Base64UrlDecode(request.ResetCode);
+                        token = Encoding.UTF8.GetString(decodedBytes);
+                    }
+                    catch
+                    {
+                        return TypedResults.BadRequest(new { Message = "Invalid token format" });
+                    }
+
+                    var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
+                    if (!result.Succeeded)
+                    {
+                        return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
+                            e => new[] { e.Description }));
+                    }
+
+                    return TypedResults.Ok(new { Message = "Password has been reset" });
+                })
+            .Produces(200)
+            .Produces(400)
+            .ProducesValidationProblem();
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)
