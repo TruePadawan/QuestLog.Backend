@@ -14,54 +14,96 @@ public static class CustomAuthEndpoints
 {
     public static void MapCustomAuthEndpoints(this WebApplication app)
     {
-        app.MapPost("/register",
-            async Task<Results<Ok, ValidationProblem>> (UserManager<User> userManager, IResend resendClient,
-                RegisterRequest request, IOptions<QuestLogSettings> options) =>
-            {
-                var user = new User
+        var authGroup = app.MapGroup("/auth");
+
+        authGroup.MapPost("/login",
+                async Task<IResult> (SignInManager<User> signInManager, LoginRequest request) =>
                 {
-                    UserName = request.Email, Email = request.Email
-                };
-                var result = await userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
+                    var result = await signInManager.PasswordSignInAsync(
+                        request.Email,
+                        request.Password,
+                        isPersistent: true,
+                        lockoutOnFailure: true
+                    );
+
+                    if (result.Succeeded)
+                    {
+                        return TypedResults.Ok();
+                    }
+
+                    // Email is not verified
+                    if (result.IsNotAllowed)
+                    {
+                        return TypedResults.Problem("Please check your inbox and verify your email address",
+                            statusCode: 403);
+                    }
+
+                    // Handle lockout
+                    if (result.IsLockedOut)
+                    {
+                        return TypedResults.Problem("Too many failed login attempts, try again later bozo",
+                            statusCode: 423);
+                    }
+
+                    return TypedResults.Unauthorized();
+                })
+            .Produces(200)
+            .Produces(401)
+            .ProducesProblem(403)
+            .ProducesProblem(423);
+
+        authGroup.MapPost("/register",
+                async Task<IResult> (UserManager<User> userManager, IResend resendClient,
+                    RegisterRequest request, IOptions<QuestLogSettings> options) =>
                 {
-                    return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
-                        e => new[] { e.Description }));
-                }
+                    var user = new User
+                    {
+                        UserName = request.Email, Email = request.Email
+                    };
+                    var result = await userManager.CreateAsync(user, request.Password);
+                    if (!result.Succeeded)
+                    {
+                        return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
+                            e => new[] { e.Description }));
+                    }
 
-                var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                    var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-                var settings = options.Value;
-                var callbackUrl = $"{settings.FrontEndUrl}/verify-email?userid={user.Id}&code={code}";
+                    var settings = options.Value;
+                    var callbackUrl = $"{settings.FrontEndUrl}/verify-email?userid={user.Id}&code={code}";
 
-                var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
+                    var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
 
-                await resendClient.EmailSendAsync(emailMessage);
-                return TypedResults.Ok();
-            });
+                    await resendClient.EmailSendAsync(emailMessage);
+                    return TypedResults.Ok();
+                })
+            .Produces(200)
+            .ProducesValidationProblem();
 
-        app.MapPost("/resendConfirmationEmail",
-            async Task<Results<Ok, BadRequest<string>>> (UserManager<User> userManager,
-                IResend resendClient,
-                IOptions<QuestLogSettings> options,
-                ResendConfirmationEmailRequest request) =>
-            {
-                var user = await userManager.FindByEmailAsync(request.Email);
-                if (user == null)
+        authGroup.MapPost("/resendConfirmationEmail",
+                async Task<IResult> (UserManager<User> userManager,
+                    IResend resendClient,
+                    IOptions<QuestLogSettings> options,
+                    ResendConfirmationEmailRequest request) =>
                 {
-                    return TypedResults.BadRequest("No user with specified email address");
-                }
+                    var user = await userManager.FindByEmailAsync(request.Email);
+                    if (user == null)
+                    {
+                        return TypedResults.BadRequest("No user with specified email address");
+                    }
 
-                var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-                var settings = options.Value;
-                var callbackUrl = $"{settings.FrontEndUrl}/verify-email?userid={user.Id}&code={code}";
+                    var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                    var settings = options.Value;
+                    var callbackUrl = $"{settings.FrontEndUrl}/verify-email?userid={user.Id}&code={code}";
 
-                var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
-                await resendClient.EmailSendAsync(emailMessage);
-                return TypedResults.Ok();
-            });
+                    var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
+                    await resendClient.EmailSendAsync(emailMessage);
+                    return TypedResults.Ok();
+                })
+            .Produces(200)
+            .Produces(400);
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)
