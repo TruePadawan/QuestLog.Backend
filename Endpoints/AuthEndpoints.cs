@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using QuestLog.Backend.Database;
+using QuestLog.Backend.Lib.Dtos;
 using QuestLog.Backend.Settings;
 using Resend;
 
@@ -197,6 +199,16 @@ public static class AuthEndpoints
             .Produces(200)
             .Produces(400)
             .ProducesValidationProblem();
+
+        authGroup.MapGet("/me", (ClaimsPrincipal user) =>
+        {
+            var userDto = new UserDto
+            {
+                Email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
+                CharacterName = user.FindFirst(c => c.Type == "CharacterName")?.Value ?? string.Empty
+            };
+            return TypedResults.Ok(userDto);
+        }).RequireAuthorization();
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)
