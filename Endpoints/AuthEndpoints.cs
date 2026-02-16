@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.WebUtilities;
@@ -10,9 +9,9 @@ using Resend;
 
 namespace QuestLog.Backend.Endpoints;
 
-public static class CustomAuthEndpoints
+public static class AuthEndpoints
 {
-    public static void MapCustomAuthEndpoints(this WebApplication app)
+    public static void MapAuthEndpoints(this WebApplication app)
     {
         var authGroup = app.MapGroup("/auth");
 
