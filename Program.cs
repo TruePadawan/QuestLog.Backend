@@ -52,9 +52,8 @@ builder.Services.AddIdentityCore<User>(options =>
     .AddEntityFrameworkStores<QuestLogDbContext>()
     .AddApiEndpoints();
 
-// Setup DB
-builder.Services.AddDbContext<QuestLogDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
+// Setup DB Connection and Seeding
+builder.SetupDb();
 
 // Modify Cookie
 builder.Services.ConfigureApplicationCookie(options =>
