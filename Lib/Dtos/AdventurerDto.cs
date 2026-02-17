@@ -1,7 +1,7 @@
 namespace QuestLog.Backend.Lib.Dtos;
 
-public record UserDto
+public record AdventurerDto
 {
-    public string Email { get; init; } = string.Empty;
     public string CharacterName { get; init; } = string.Empty;
+    public string CharacterClass { get; init; } = string.Empty;
 };

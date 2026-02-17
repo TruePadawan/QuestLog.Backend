@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using QuestLog.Backend.Database;
 using QuestLog.Backend.Lib.Dtos;
@@ -58,10 +59,7 @@ public static class AuthEndpoints
                 async Task<IResult> (UserManager<User> userManager, IResend resendClient,
                     RegisterRequest request, IOptions<QuestLogSettings> options) =>
                 {
-                    var user = new User
-                    {
-                        UserName = request.Email, Email = request.Email
-                    };
+                    var user = new User();
                     var result = await userManager.CreateAsync(user, request.Password);
                     if (!result.Succeeded)
                     {
@@ -108,7 +106,8 @@ public static class AuthEndpoints
             .Produces(400);
 
         authGroup.MapGet("/confirmEmail",
-                async Task<IResult> (UserManager<User> userManager, string userId, string code) =>
+                async Task<IResult> (UserManager<User> userManager, QuestLogDbContext dbContext, string userId,
+                    string code) =>
                 {
                     if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
                     {
@@ -135,6 +134,22 @@ public static class AuthEndpoints
                     var result = await userManager.ConfirmEmailAsync(user, token);
                     if (result.Succeeded)
                     {
+                        // Create a default adventurer for the user
+                        var defaultClass = await dbContext.CharacterClasses.FirstOrDefaultAsync();
+                        if (defaultClass == null)
+                        {
+                            return TypedResults.BadRequest("No default character class found");
+                        }
+
+                        var newAdventurer = new Adventurer
+                        {
+                            UserId = user.Id,
+                            CharacterName = "Noob",
+                            CharacterClass = defaultClass
+                        };
+                        await dbContext.Adventurers.AddAsync(newAdventurer);
+                        await dbContext.SaveChangesAsync();
+
                         return TypedResults.Ok(new { Message = "Email verified successfully" });
                     }
 
@@ -201,14 +216,28 @@ public static class AuthEndpoints
             .Produces(400)
             .ProducesValidationProblem();
 
-        authGroup.MapGet("/me", (ClaimsPrincipal user) =>
+        authGroup.MapGet("/me", async Task<IResult> (QuestLogDbContext dbContext, ClaimsPrincipal user) =>
         {
-            var userDto = new UserDto
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return TypedResults.Unauthorized();
+
+            var adventurer = await dbContext.Adventurers
+                .Include(a => a.CharacterClass)
+                .FirstOrDefaultAsync(a => a.UserId == userId);
+
+            if (adventurer == null)
             {
-                Email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-                CharacterName = user.FindFirst(c => c.Type == "CharacterName")?.Value ?? string.Empty
+                return TypedResults.NotFound(new { Message = "No adventurer found for this user" });
+            }
+
+            var adventurerDto = new AdventurerDto
+            {
+                CharacterName = adventurer.CharacterName,
+                CharacterClass = adventurer.CharacterClass.Name
             };
-            return TypedResults.Ok(userDto);
+
+            Console.WriteLine(adventurerDto);
+            return TypedResults.Ok(adventurerDto);
         }).RequireAuthorization();
 
         authGroup.MapPost("/logout", async (SignInManager<User> signInManager) =>

@@ -52,7 +52,7 @@ builder.Services.AddIdentityCore<User>(options =>
     .AddEntityFrameworkStores<QuestLogDbContext>()
     .AddApiEndpoints();
 
-// Setup DB Connection and Seeding
+// Set up DB Connection and Seeding
 builder.SetupDb();
 
 // Modify Cookie

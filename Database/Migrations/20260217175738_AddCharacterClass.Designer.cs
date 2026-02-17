@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuestLog.Backend.Database;
@@ -11,9 +12,11 @@ using QuestLog.Backend.Database;
 namespace QuestLog.Backend.Database.Migrations
 {
     [DbContext(typeof(QuestLogDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260217175738_AddCharacterClass")]
+    partial class AddCharacterClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,26 +158,6 @@ namespace QuestLog.Backend.Database.Migrations
                     b.ToTable("AspNetUserTokens", "identity");
                 });
 
-            modelBuilder.Entity("QuestLog.Backend.Models.Adventurer", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("CharacterClassId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CharacterName")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.HasKey("UserId");
-
-                    b.HasIndex("CharacterClassId");
-
-                    b.ToTable("Adventurers", "public");
-                });
-
             modelBuilder.Entity("QuestLog.Backend.Models.CharacterClass", b =>
                 {
                     b.Property<int>("Id")
@@ -190,7 +173,7 @@ namespace QuestLog.Backend.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CharacterClasses", "public");
+                    b.ToTable("CharacterClasses", "identity");
                 });
 
             modelBuilder.Entity("QuestLog.Backend.Models.User", b =>
@@ -200,6 +183,14 @@ namespace QuestLog.Backend.Database.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
+
+                    b.Property<int>("CharacterClassId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CharacterName")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -246,6 +237,8 @@ namespace QuestLog.Backend.Database.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CharacterClassId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -308,7 +301,7 @@ namespace QuestLog.Backend.Database.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("QuestLog.Backend.Models.Adventurer", b =>
+            modelBuilder.Entity("QuestLog.Backend.Models.User", b =>
                 {
                     b.HasOne("QuestLog.Backend.Models.CharacterClass", "CharacterClass")
                         .WithMany()
