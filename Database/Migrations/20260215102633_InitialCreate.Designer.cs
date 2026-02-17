@@ -11,7 +11,7 @@ using QuestLog.Backend.Database;
 
 namespace QuestLog.Backend.Database.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(QuestLogDbContext))]
     [Migration("20260215102633_InitialCreate")]
     partial class InitialCreate
     {

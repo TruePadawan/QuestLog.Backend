@@ -48,11 +48,11 @@ builder.Services.AddIdentityCore<User>(options =>
         options.User.RequireUniqueEmail = true;
         options.SignIn.RequireConfirmedEmail = true;
     })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddEntityFrameworkStores<QuestLogDbContext>()
     .AddApiEndpoints();
 
 // Setup DB
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<QuestLogDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
 // Modify Cookie

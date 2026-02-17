@@ -10,7 +10,7 @@ using QuestLog.Backend.Database;
 
 namespace QuestLog.Backend.Database.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(QuestLogDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

@@ -3,13 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace QuestLog.Backend.Database;
 
-public class ApplicationDbContext : IdentityDbContext<User>
+public class QuestLogDbContext(DbContextOptions<QuestLogDbContext> options) : IdentityDbContext<User>(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
