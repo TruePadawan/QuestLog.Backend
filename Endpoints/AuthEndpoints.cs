@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using QuestLog.Backend.Database;
+using QuestLog.Backend.Lib;
 using QuestLog.Backend.Lib.Dtos;
 using QuestLog.Backend.Models;
 using QuestLog.Backend.Settings;
@@ -31,29 +32,30 @@ public static class AuthEndpoints
 
                     if (result.Succeeded)
                     {
-                        return TypedResults.Ok(new { Message = "Login successful" });
+                        var response = ApiResponse<object>.Ok(null, "Login successful");
+                        return TypedResults.Json(response, statusCode: StatusCodes.Status200OK);
                     }
 
                     // Email is not verified
                     if (result.IsNotAllowed)
                     {
-                        return TypedResults.Problem("Please check your inbox and verify your email address",
-                            statusCode: 403);
+                        var response = ApiResponse<object>.Fail("Email not verified");
+                        return TypedResults.Json(response, statusCode: StatusCodes.Status403Forbidden);
                     }
 
                     // Handle lockout
                     if (result.IsLockedOut)
                     {
-                        return TypedResults.Problem("Too many failed login attempts, try again later bozo",
-                            statusCode: 423);
+                        var response = ApiResponse<object>.Fail("Too many failed login attempts, try again later");
+                        return TypedResults.Json(response, statusCode: StatusCodes.Status423Locked);
                     }
 
-                    return TypedResults.Unauthorized();
+                    return TypedResults.Json(ApiResponse<object>.Fail(), statusCode: StatusCodes.Status401Unauthorized);
                 })
-            .Produces(200)
-            .Produces(401)
-            .ProducesProblem(403)
-            .ProducesProblem(423);
+            .Produces<ApiResponse<object>>(200)
+            .Produces<ApiResponse<object>>(401)
+            .Produces(403)
+            .Produces(423);
 
         authGroup.MapPost("/register",
                 async Task<IResult> (UserManager<User> userManager, IResend resendClient,
@@ -67,8 +69,9 @@ public static class AuthEndpoints
                     var result = await userManager.CreateAsync(user, request.Password);
                     if (!result.Succeeded)
                     {
-                        return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
-                            e => new[] { e.Description }));
+                        var response = ApiResponse<object>.Fail("Validation errors",
+                            result.Errors.Select(e => e.Description).ToList());
+                        return TypedResults.Json(response, statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -80,10 +83,11 @@ public static class AuthEndpoints
                     var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
 
                     await resendClient.EmailSendAsync(emailMessage);
-                    return TypedResults.Ok(new { Message = "Check your email for a verification link" });
+                    var okResponse = ApiResponse<object>.Ok(null, "Registration successful");
+                    return TypedResults.Json(okResponse, statusCode: StatusCodes.Status200OK);
                 })
-            .Produces(200)
-            .ProducesValidationProblem();
+            .Produces<ApiResponse<object>>(200)
+            .Produces<ApiResponse<object>>(400);
 
         authGroup.MapPost("/resendConfirmationEmail",
                 async Task<IResult> (UserManager<User> userManager,
@@ -94,7 +98,8 @@ public static class AuthEndpoints
                     var user = await userManager.FindByEmailAsync(request.Email);
                     if (user == null)
                     {
-                        return TypedResults.BadRequest();
+                        return TypedResults.Json(ApiResponse<object>.Fail(),
+                            statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -104,10 +109,12 @@ public static class AuthEndpoints
 
                     var emailMessage = GetVerificationEmailMessage(request.Email, callbackUrl);
                     await resendClient.EmailSendAsync(emailMessage);
-                    return TypedResults.Ok(new { Message = "Check your email for a verification link" });
+
+                    return TypedResults.Json(ApiResponse<object>.Ok(null, "Email resent successfully"),
+                        statusCode: StatusCodes.Status200OK);
                 })
-            .Produces(200)
-            .Produces(400);
+            .Produces<ApiResponse<object>>(200)
+            .Produces<ApiResponse<object>>(400);
 
         authGroup.MapGet("/confirmEmail",
                 async Task<IResult> (UserManager<User> userManager, QuestLogDbContext dbContext, string userId,
@@ -115,13 +122,14 @@ public static class AuthEndpoints
                 {
                     if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
                     {
-                        return TypedResults.BadRequest("Invalid email confirmation url");
+                        return TypedResults.Json(ApiResponse<object>.Fail("Invalid email confirmation url"),
+                            statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     var user = await userManager.FindByIdAsync(userId);
                     if (user == null)
                     {
-                        return TypedResults.Unauthorized();
+                        return TypedResults.Json(ApiResponse<object>.Fail(), statusCode: StatusCodes.Status404NotFound);
                     }
 
                     string token;
@@ -132,7 +140,8 @@ public static class AuthEndpoints
                     }
                     catch
                     {
-                        return TypedResults.BadRequest(new { Message = "Invalid token format" });
+                        return TypedResults.Json(ApiResponse<object>.Fail("Invalid token format"),
+                            statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     var result = await userManager.ConfirmEmailAsync(user, token);
@@ -142,7 +151,8 @@ public static class AuthEndpoints
                         var defaultClass = await dbContext.CharacterClasses.FirstOrDefaultAsync();
                         if (defaultClass == null)
                         {
-                            return TypedResults.BadRequest("No default character class found");
+                            return TypedResults.Json(ApiResponse<object>.Fail("No default character class found"),
+                                statusCode: StatusCodes.Status400BadRequest);
                         }
 
                         var newAdventurer = new Adventurer
@@ -154,15 +164,18 @@ public static class AuthEndpoints
                         await dbContext.Adventurers.AddAsync(newAdventurer);
                         await dbContext.SaveChangesAsync();
 
-                        return TypedResults.Ok(new { Message = "Email verified successfully" });
+                        return TypedResults.Json(ApiResponse<object>.Ok(null, "Email confirmed successfully"),
+                            statusCode: StatusCodes.Status200OK);
                     }
 
-                    return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
-                        e => new[] { e.Description }));
+                    return TypedResults.Json(
+                        ApiResponse<object>.Fail("Failed to confirm email",
+                            result.Errors.Select(e => e.Description).ToList()),
+                        statusCode: StatusCodes.Status400BadRequest);
                 })
-            .ProducesValidationProblem()
-            .Produces(200)
-            .Produces(400);
+            .Produces<ApiResponse<object>>(400)
+            .Produces<ApiResponse<object>>(404)
+            .Produces<ApiResponse<object>>(200);
 
         authGroup.MapPost("/forgotPassword", async Task<IResult> (UserManager<User> userManager,
                 ForgotPasswordRequest request,
@@ -172,7 +185,7 @@ public static class AuthEndpoints
                 var user = await userManager.FindByEmailAsync(request.Email);
                 if (user == null)
                 {
-                    return TypedResults.BadRequest();
+                    return TypedResults.Json(ApiResponse<object>.Fail(), statusCode: StatusCodes.Status400BadRequest);
                 }
 
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -182,10 +195,11 @@ public static class AuthEndpoints
 
                 var emailMessage = GetPasswordResetEmailMessage(request.Email, callbackUrl);
                 await resendClient.EmailSendAsync(emailMessage);
-                return TypedResults.Ok(new { Message = "Password reset link has been sent" });
+                return TypedResults.Json(ApiResponse<object>.Ok(null, "Password reset link sent successfully"),
+                    statusCode: StatusCodes.Status200OK);
             })
-            .Produces(400)
-            .Produces(200);
+            .Produces<ApiResponse<object>>(400)
+            .Produces<ApiResponse<object>>(200);
 
         authGroup.MapPost("/resetPassword",
                 async Task<IResult> (ResetPasswordRequest request, UserManager<User> userManager) =>
@@ -193,7 +207,8 @@ public static class AuthEndpoints
                     var user = await userManager.FindByEmailAsync(request.Email);
                     if (user == null)
                     {
-                        return TypedResults.BadRequest();
+                        return TypedResults.Json(ApiResponse<object>.Fail(),
+                            statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     string token;
@@ -204,51 +219,62 @@ public static class AuthEndpoints
                     }
                     catch
                     {
-                        return TypedResults.BadRequest(new { Message = "Invalid token format" });
+                        return TypedResults.Json(ApiResponse<object>.Fail("Invalid token format"),
+                            statusCode: StatusCodes.Status400BadRequest);
                     }
 
                     var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
                     if (!result.Succeeded)
                     {
-                        return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code,
-                            e => new[] { e.Description }));
+                        return TypedResults.Json(ApiResponse<object>.Fail("Validation errors",
+                            result.Errors.Select(e => e.Description).ToList()));
                     }
 
-                    return TypedResults.Ok(new { Message = "Password has been reset" });
+                    return TypedResults.Json(ApiResponse<object>.Ok(null, "Password reset successful"),
+                        statusCode: StatusCodes.Status200OK);
                 })
-            .Produces(200)
-            .Produces(400)
-            .ProducesValidationProblem();
+            .Produces<ApiResponse<object>>(200)
+            .Produces<ApiResponse<object>>(400);
 
         authGroup.MapGet("/me", async Task<IResult> (QuestLogDbContext dbContext, ClaimsPrincipal user) =>
-        {
-            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return TypedResults.Unauthorized();
-
-            var adventurer = await dbContext.Adventurers
-                .Include(a => a.CharacterClass)
-                .FirstOrDefaultAsync(a => a.UserId == userId);
-
-            if (adventurer == null)
             {
-                return TypedResults.NotFound(new { Message = "No adventurer found for this user" });
-            }
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userId == null)
+                {
+                    return TypedResults.Json(ApiResponse<object>.Fail("User not logged in"),
+                        statusCode: StatusCodes.Status401Unauthorized);
+                }
 
-            var adventurerDto = new AdventurerDto
-            {
-                CharacterName = adventurer.CharacterName,
-                CharacterClass = adventurer.CharacterClass.Name
-            };
+                var adventurer = await dbContext.Adventurers
+                    .Include(a => a.CharacterClass)
+                    .FirstOrDefaultAsync(a => a.UserId == userId);
 
-            Console.WriteLine(adventurerDto);
-            return TypedResults.Ok(adventurerDto);
-        }).RequireAuthorization();
+                if (adventurer == null)
+                {
+                    return TypedResults.Json(ApiResponse<object>.Fail("No adventurer found for this user"),
+                        statusCode: StatusCodes.Status404NotFound);
+                }
+
+                var adventurerDto = new AdventurerDto
+                {
+                    CharacterName = adventurer.CharacterName,
+                    CharacterClass = adventurer.CharacterClass.Name
+                };
+
+                return TypedResults.Json(ApiResponse<AdventurerDto>.Ok(adventurerDto),
+                    statusCode: StatusCodes.Status200OK);
+            }).RequireAuthorization()
+            .Produces<ApiResponse<object>>(401)
+            .Produces<ApiResponse<object>>(404)
+            .Produces<ApiResponse<object>>(200);
 
         authGroup.MapPost("/logout", async (SignInManager<User> signInManager) =>
-        {
-            await signInManager.SignOutAsync();
-            return TypedResults.Ok(new { Message = "Logout successful" });
-        });
+            {
+                await signInManager.SignOutAsync();
+                return TypedResults.Json(ApiResponse<object>.Ok(null, "Logout successful"),
+                    statusCode: StatusCodes.Status200OK);
+            })
+            .Produces<ApiResponse<object>>(200);
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)
