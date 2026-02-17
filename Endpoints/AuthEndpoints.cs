@@ -209,6 +209,12 @@ public static class AuthEndpoints
             };
             return TypedResults.Ok(userDto);
         }).RequireAuthorization();
+
+        authGroup.MapPost("/logout", async (SignInManager<User> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return TypedResults.Ok(new { Message = "Logout successful" });
+        });
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)
