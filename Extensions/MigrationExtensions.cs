@@ -21,12 +21,15 @@ public static class MigrationExtensions
             options.UseSeeding((dbContext, _) =>
             {
                 // Add some default character classes
-                if (dbContext.Set<CharacterClass>().Any()) return;
-                dbContext.Set<CharacterClass>().AddRange(
+                var characterClasses = dbContext.Set<CharacterClass>();
+                if (characterClasses.Any()) return;
+
+                characterClasses.AddRange(
                 [
                     new CharacterClass { Name = "Mage" },
                     new CharacterClass { Name = "Warrior" }
                 ]);
+                dbContext.SaveChanges();
             });
         });
     }

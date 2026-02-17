@@ -59,7 +59,11 @@ public static class AuthEndpoints
                 async Task<IResult> (UserManager<User> userManager, IResend resendClient,
                     RegisterRequest request, IOptions<QuestLogSettings> options) =>
                 {
-                    var user = new User();
+                    var user = new User
+                    {
+                        Email = request.Email,
+                        UserName = request.Email
+                    };
                     var result = await userManager.CreateAsync(user, request.Password);
                     if (!result.Succeeded)
                     {
@@ -368,11 +372,11 @@ public static class AuthEndpoints
 
     private static string GetVerificationUrl(string frontEndUrl, string userId, string code)
     {
-        return $"{frontEndUrl}/verify-email?userId={userId}&code={code}";
+        return $"{frontEndUrl}/auth/verify-email?userId={userId}&code={code}";
     }
 
     private static string GetPasswordResetUrl(string frontEndUrl, string userEmail, string resetCode)
     {
-        return $"{frontEndUrl}/reset-password?userEmail={userEmail}&code={resetCode}";
+        return $"{frontEndUrl}/auth/reset-password?userEmail={userEmail}&code={resetCode}";
     }
 }
