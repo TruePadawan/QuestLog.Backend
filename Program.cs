@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using QuestLog.Backend.Database;
 using QuestLog.Backend.Endpoints;
 using QuestLog.Backend.Extensions;
+using QuestLog.Backend.Models;
 using QuestLog.Backend.Settings;
 using Resend;
 using Scalar.AspNetCore;

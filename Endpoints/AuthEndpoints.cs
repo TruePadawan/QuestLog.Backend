@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using QuestLog.Backend.Database;
 using QuestLog.Backend.Lib.Dtos;
+using QuestLog.Backend.Models;
 using QuestLog.Backend.Settings;
 using Resend;
 

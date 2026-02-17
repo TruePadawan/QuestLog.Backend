@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
-namespace QuestLog.Backend.Database;
+namespace QuestLog.Backend.Models;
 
 public class User : IdentityUser
 {
