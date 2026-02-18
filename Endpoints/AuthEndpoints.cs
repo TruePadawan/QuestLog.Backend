@@ -230,6 +230,7 @@ public static class AuthEndpoints
 
                 var adventurer = await dbContext.Adventurers
                     .Include(a => a.CharacterClass)
+                    .ThenInclude(characterClass => characterClass.Progressions)
                     .FirstOrDefaultAsync(a => a.UserId == userId);
 
                 if (adventurer == null)
@@ -241,7 +242,9 @@ public static class AuthEndpoints
                 var adventurerDto = new AdventurerDetailsDto
                 {
                     CharacterName = adventurer.CharacterName,
-                    CharacterClass = adventurer.CharacterClass.Name
+                    CharacterClass = adventurer.CharacterClass.Name,
+                    Xp = adventurer.Xp,
+                    Tier = Utilities.CalculateTier(adventurer.Xp, adventurer.CharacterClass.Progressions)
                 };
 
                 return TypedResults.Json(ApiResponse<AdventurerDetailsDto>.Ok(adventurerDto),
