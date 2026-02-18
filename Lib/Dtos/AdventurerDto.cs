@@ -1,7 +1,14 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuestLog.Backend.Lib.Dtos;
 
-public record AdventurerDto
+public record AdventurerDetailsDto
 {
-    public string CharacterName { get; init; } = string.Empty;
-    public string CharacterClass { get; init; } = string.Empty;
+    public required string CharacterName { get; init; }
+    public required string CharacterClass { get; init; }
 };
+
+public record CreateAdventurerDto(
+    [Required] string CharacterName,
+    [Required] string CharacterClass
+);

@@ -147,23 +147,6 @@ public static class AuthEndpoints
                     var result = await userManager.ConfirmEmailAsync(user, token);
                     if (result.Succeeded)
                     {
-                        // Create a default adventurer for the user
-                        var defaultClass = await dbContext.CharacterClasses.FirstOrDefaultAsync();
-                        if (defaultClass == null)
-                        {
-                            return TypedResults.Json(ApiResponse<object>.Fail("No default character class found"),
-                                statusCode: StatusCodes.Status400BadRequest);
-                        }
-
-                        var newAdventurer = new Adventurer
-                        {
-                            UserId = user.Id,
-                            CharacterName = "Noob",
-                            CharacterClass = defaultClass
-                        };
-                        await dbContext.Adventurers.AddAsync(newAdventurer);
-                        await dbContext.SaveChangesAsync();
-
                         return TypedResults.Json(ApiResponse<object>.Ok(null, "Email confirmed successfully"),
                             statusCode: StatusCodes.Status200OK);
                     }
@@ -255,13 +238,13 @@ public static class AuthEndpoints
                         statusCode: StatusCodes.Status404NotFound);
                 }
 
-                var adventurerDto = new AdventurerDto
+                var adventurerDto = new AdventurerDetailsDto
                 {
                     CharacterName = adventurer.CharacterName,
                     CharacterClass = adventurer.CharacterClass.Name
                 };
 
-                return TypedResults.Json(ApiResponse<AdventurerDto>.Ok(adventurerDto),
+                return TypedResults.Json(ApiResponse<AdventurerDetailsDto>.Ok(adventurerDto),
                     statusCode: StatusCodes.Status200OK);
             }).RequireAuthorization()
             .Produces<ApiResponse<object>>(401)
