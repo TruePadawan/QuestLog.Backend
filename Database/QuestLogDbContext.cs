@@ -8,6 +8,7 @@ public class QuestLogDbContext(DbContextOptions<QuestLogDbContext> options) : Id
 {
     public DbSet<CharacterClass> CharacterClasses => Set<CharacterClass>();
     public DbSet<Adventurer> Adventurers => Set<Adventurer>();
+    public DbSet<ClassProgression> ClassProgressions => Set<ClassProgression>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -15,9 +16,10 @@ public class QuestLogDbContext(DbContextOptions<QuestLogDbContext> options) : Id
 
         builder.HasDefaultSchema("identity");
 
-        // The UserId is the primary key for the Adventurers table
-        builder.Entity<Adventurer>().HasKey(x => x.UserId);
-        builder.Entity<CharacterClass>().ToTable("CharacterClasses", "public");
-        builder.Entity<Adventurer>().ToTable("Adventurers", "public");
+        builder.Entity<CharacterClass>()
+            .HasMany(c => c.Progressions)
+            .WithOne(p => p.CharacterClass)
+            .HasForeignKey(p => p.CharacterClassId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuestLog.Backend.Database;
@@ -11,9 +12,11 @@ using QuestLog.Backend.Database;
 namespace QuestLog.Backend.Database.Migrations
 {
     [DbContext(typeof(QuestLogDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260218085425_ClassProgressionSetup")]
+    partial class ClassProgressionSetup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -217,8 +220,6 @@ namespace QuestLog.Backend.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CharacterClassId");
-
                     b.ToTable("ClassProgressions", "public");
                 });
 
@@ -346,22 +347,6 @@ namespace QuestLog.Backend.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("CharacterClass");
-                });
-
-            modelBuilder.Entity("QuestLog.Backend.Models.ClassProgression", b =>
-                {
-                    b.HasOne("QuestLog.Backend.Models.CharacterClass", "CharacterClass")
-                        .WithMany("Progressions")
-                        .HasForeignKey("CharacterClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CharacterClass");
-                });
-
-            modelBuilder.Entity("QuestLog.Backend.Models.CharacterClass", b =>
-                {
-                    b.Navigation("Progressions");
                 });
 #pragma warning restore 612, 618
         }
