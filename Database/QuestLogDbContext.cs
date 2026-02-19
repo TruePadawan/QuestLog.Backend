@@ -9,6 +9,7 @@ public class QuestLogDbContext(DbContextOptions<QuestLogDbContext> options) : Id
     public DbSet<CharacterClass> CharacterClasses => Set<CharacterClass>();
     public DbSet<Adventurer> Adventurers => Set<Adventurer>();
     public DbSet<ClassProgression> ClassProgressions => Set<ClassProgression>();
+    public DbSet<Quest> Quests => Set<Quest>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
