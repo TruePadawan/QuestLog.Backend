@@ -8,12 +8,13 @@ namespace QuestLog.Backend.Models;
 public class Quest
 {
     public int Id { get; init; }
-    [MaxLength(50)] public required string Title { get; init; }
-    public JsonDocument? Details { get; init; }
-    public required DifficultyRating DifficultyRating { get; init; }
-    public required QuestCategory Category { get; init; }
-    public required DateTime Deadline { get; init; }
-    public ICollection<string> Tags { get; init; } = [];
+    [MaxLength(50)] public required string Title { get; set; }
+    public JsonDocument? Details { get; set; }
+    public required DifficultyRating DifficultyRating { get; set; }
+    public required QuestCategory Category { get; set; }
+    public required DateTime Deadline { get; set; }
+    public ICollection<string> Tags { get; set; } = [];
+    public bool Completed { get; set; } = false;
     public string AdventurerId { get; init; }
     public required Adventurer Adventurer { get; init; }
 }
