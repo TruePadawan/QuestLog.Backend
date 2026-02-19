@@ -116,5 +116,28 @@ public static class QuestEndpoints
             .RequireAuthorization()
             .Produces<ApiResponse<Quest>>(200)
             .Produces<ApiResponse<object>>(404);
+
+        questGroup.MapDelete("/{questId:int}",
+                async Task<IResult> (int questId, ClaimsPrincipal user, QuestLogDbContext dbContext) =>
+                {
+                    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (userId == null)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("User not logged in"),
+                            statusCode: StatusCodes.Status401Unauthorized);
+                    }
+
+                    var rowsDeleted = await dbContext.Quests.Where(q => q.Id == questId).ExecuteDeleteAsync();
+                    if (rowsDeleted == 0)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
+                            statusCode: StatusCodes.Status404NotFound);
+                    }
+
+                    return TypedResults.Json(ApiResponse<object>.Ok(null), statusCode: StatusCodes.Status200OK);
+                }).RequireAuthorization()
+            .Produces<ApiResponse<object>>(200)
+            .Produces<ApiResponse<object>>(401)
+            .Produces<ApiResponse<object>>(404);
     }
 }
