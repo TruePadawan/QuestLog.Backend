@@ -17,10 +17,22 @@ public class QuestLogDbContext(DbContextOptions<QuestLogDbContext> options) : Id
 
         builder.HasDefaultSchema("identity");
 
+        // Each character class has one or more progressions, each progression is linked to a single character class
+        // Delete all its progressions when the character class is deleted
         builder.Entity<CharacterClass>()
             .HasMany(c => c.Progressions)
             .WithOne(p => p.CharacterClass)
             .HasForeignKey(p => p.CharacterClassId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Store the difficulty rating enum as a string
+        builder.Entity<Quest>()
+            .Property(q => q.DifficultyRating)
+            .HasConversion<string>();
+
+        // Store the quest category enum as a string
+        builder.Entity<Quest>()
+            .Property(q => q.Category)
+            .HasConversion<string>();
     }
 }

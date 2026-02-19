@@ -3,6 +3,7 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuestLog.Backend.Database;
@@ -12,9 +13,11 @@ using QuestLog.Backend.Database;
 namespace QuestLog.Backend.Database.Migrations
 {
     [DbContext(typeof(QuestLogDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260219124944_AddQuestsTable")]
+    partial class AddQuestsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -235,9 +238,8 @@ namespace QuestLog.Backend.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("timestamp with time zone");
@@ -245,9 +247,8 @@ namespace QuestLog.Backend.Database.Migrations
                     b.Property<JsonDocument>("Details")
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("DifficultyRating")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("DifficultyRating")
+                        .HasColumnType("integer");
 
                     b.PrimitiveCollection<string[]>("Tags")
                         .IsRequired()

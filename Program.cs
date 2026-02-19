@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuestLog.Backend.Database;
@@ -90,6 +91,12 @@ builder.Services.AddOptions<QuestLogSettings>()
     .ValidateOnStart();
 
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // Convert enum values to their string representation
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 var app = builder.Build();
 app.UseCors("AllowLocalReactApp");
 // Configure the HTTP request pipeline.
@@ -105,5 +112,6 @@ app.UseHttpsRedirection();
 app.MapAuthEndpoints();
 app.MapCharacterClassEndpoints();
 app.MapAdventurerEndpoints();
+app.MapQuestEndpoints();
 
 app.Run();

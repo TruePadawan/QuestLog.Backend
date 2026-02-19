@@ -14,6 +14,6 @@ public class Quest
     public required QuestCategory Category { get; init; }
     public required DateTime Deadline { get; init; }
     public ICollection<string> Tags { get; init; } = [];
-    public required string AdventurerId { get; init; }
+    public string AdventurerId { get; init; }
     public required Adventurer Adventurer { get; init; }
 }
