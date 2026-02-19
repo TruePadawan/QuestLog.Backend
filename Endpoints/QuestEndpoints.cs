@@ -23,7 +23,6 @@ public static class QuestEndpoints
                             statusCode: StatusCodes.Status401Unauthorized);
                     }
 
-                    Console.WriteLine(userId);
                     var adventurer = await dbContext.Adventurers.FirstOrDefaultAsync(a => a.UserId == userId);
                     if (adventurer == null)
                     {
@@ -48,5 +47,81 @@ public static class QuestEndpoints
             .Produces<ApiResponse<object>>(201)
             .Produces<ApiResponse<object>>(400)
             .Produces<ApiResponse<object>>(401);
+
+        questGroup.MapGet("/",
+                async Task<IResult> (QuestLogDbContext dbContext, string? tag, string? category,
+                    bool? completed = false) =>
+                {
+                    if (string.IsNullOrEmpty(tag) && string.IsNullOrEmpty(category))
+                    {
+                        var allQuests = await dbContext.Quests.Where(q => q.Completed == completed).ToListAsync();
+                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(allQuests),
+                            statusCode: StatusCodes.Status200OK);
+                    }
+
+                    if (!string.IsNullOrEmpty(tag))
+                    {
+                        var quests = await dbContext.Quests
+                            .Where(q => q.Tags.Contains(tag) && q.Completed == completed)
+                            .ToListAsync();
+                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(quests),
+                            statusCode: StatusCodes.Status200OK);
+                    }
+                    else
+                    {
+                        var quests = await dbContext.Quests
+                            .Where(q =>
+                                q.Category.ToString().ToUpper() == category.ToUpper() && q.Completed == completed)
+                            .ToListAsync();
+                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(quests),
+                            statusCode: StatusCodes.Status200OK);
+                    }
+                })
+            .RequireAuthorization()
+            .Produces<List<Quest>>(200);
+
+        questGroup.MapGet("/{questId:int}", async Task<IResult> (int questId, QuestLogDbContext dbContext) =>
+            {
+                var quest = await dbContext.Quests.FirstOrDefaultAsync(q => q.Id == questId);
+                if (quest == null)
+                {
+                    return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
+                        statusCode: StatusCodes.Status404NotFound);
+                }
+
+                return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status200OK);
+            })
+            .RequireAuthorization()
+            .Produces<ApiResponse<object>>(404)
+            .Produces<Quest>(200);
+
+        questGroup.MapPatch("/{questId:int}",
+                async Task<IResult> (int questId, UpdateQuestDto payload, QuestLogDbContext dbContext) =>
+                {
+                    var quest = await dbContext.Quests.FirstOrDefaultAsync(q => q.Id == questId);
+                    if (quest == null)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
+                            statusCode: StatusCodes.Status404NotFound);
+                    }
+
+                    // Limit what can be updated after a quest is completed
+                    quest.Title = payload.Title;
+                    quest.Details = payload.Details;
+                    quest.DifficultyRating = payload.DifficultyRating;
+                    quest.Tags = payload.Tags;
+                    if (!quest.Completed)
+                    {
+                        quest.Deadline = payload.Deadline;
+                        quest.Category = payload.Category;
+                        quest.Completed = payload.Completed;
+                    }
+
+                    await dbContext.SaveChangesAsync();
+                    return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status200OK);
+                })
+            .RequireAuthorization()
+            .Produces<ApiResponse<Quest>>(200)
+            .Produces<ApiResponse<object>>(404);
     }
 }

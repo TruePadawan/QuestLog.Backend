@@ -13,3 +13,14 @@ public record CreateQuestDto
     [Required] public DateTime Deadline { get; init; }
     [Required] public ICollection<string> Tags { get; init; } = [];
 }
+
+public record UpdateQuestDto
+{
+    [Required] public required string Title { get; init; }
+    [Required] public JsonDocument? Details { get; init; }
+    [Required] public DifficultyRating DifficultyRating { get; init; }
+    [Required] public QuestCategory Category { get; init; }
+    [Required] public DateTime Deadline { get; init; }
+    [Required] public ICollection<string> Tags { get; init; } = [];
+    [Required] public bool Completed { get; init; }
+}
