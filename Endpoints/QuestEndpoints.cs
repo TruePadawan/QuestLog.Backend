@@ -50,32 +50,25 @@ public static class QuestEndpoints
 
         questGroup.MapGet("/",
                 async Task<IResult> (QuestLogDbContext dbContext, string? tag, string? category,
-                    bool? completed = false) =>
+                    bool? completed) =>
                 {
-                    if (string.IsNullOrEmpty(tag) && string.IsNullOrEmpty(category))
+                    var query = dbContext.Quests.AsQueryable();
+                    if (completed.HasValue)
                     {
-                        var allQuests = await dbContext.Quests.Where(q => q.Completed == completed).ToListAsync();
-                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(allQuests),
-                            statusCode: StatusCodes.Status200OK);
+                        query = query.Where(q => q.Completed == completed.Value);
                     }
 
                     if (!string.IsNullOrEmpty(tag))
                     {
-                        var quests = await dbContext.Quests
-                            .Where(q => q.Tags.Contains(tag) && q.Completed == completed)
-                            .ToListAsync();
-                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(quests),
-                            statusCode: StatusCodes.Status200OK);
+                        query = query.Where(q => q.Tags.Contains(tag));
                     }
-                    else
+                    else if (!string.IsNullOrEmpty(category))
                     {
-                        var quests = await dbContext.Quests
-                            .Where(q =>
-                                q.Category.ToString().ToUpper() == category.ToUpper() && q.Completed == completed)
-                            .ToListAsync();
-                        return TypedResults.Json(ApiResponse<List<Quest>>.Ok(quests),
-                            statusCode: StatusCodes.Status200OK);
+                        query = query.Where(q => q.Category.ToString().ToUpper() == category.ToUpper());
                     }
+
+                    var quests = await query.ToListAsync();
+                    return TypedResults.Json(ApiResponse<List<Quest>>.Ok(quests), statusCode: StatusCodes.Status200OK);
                 })
             .RequireAuthorization()
             .Produces<List<Quest>>(200);
