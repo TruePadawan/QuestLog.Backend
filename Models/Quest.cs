@@ -14,7 +14,10 @@ public class Quest
     public required QuestCategory Category { get; set; }
     public required DateTime Deadline { get; set; }
     public ICollection<string> Tags { get; set; } = [];
-    public bool Completed { get; set; } = false;
+    public bool Completed { get; set; }
     public string AdventurerId { get; init; }
     public required Adventurer Adventurer { get; init; }
+    public required DateTime CreatedAt { get; init; }
+    public DateTime? UpdatedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
 }

@@ -14,7 +14,7 @@ public static class QuestEndpoints
         var questGroup = app.MapGroup("/quests");
 
         questGroup.MapPost("/",
-                async (CreateQuestDto payload, QuestLogDbContext dbContext, ClaimsPrincipal user) =>
+                async Task<IResult> (CreateQuestDto payload, QuestLogDbContext dbContext, ClaimsPrincipal user) =>
                 {
                     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
                     if (userId == null)
@@ -30,7 +30,7 @@ public static class QuestEndpoints
                             statusCode: StatusCodes.Status404NotFound);
                     }
 
-                    await dbContext.AddAsync(new Quest
+                    var quest = new Quest
                     {
                         Title = payload.Title,
                         Details = payload.Details,
@@ -38,13 +38,15 @@ public static class QuestEndpoints
                         Category = payload.Category,
                         Deadline = payload.Deadline,
                         Tags = payload.Tags,
-                        Adventurer = adventurer
-                    });
+                        Adventurer = adventurer,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await dbContext.AddAsync(quest);
                     await dbContext.SaveChangesAsync();
-                    return TypedResults.Json(ApiResponse<object>.Ok(null), statusCode: StatusCodes.Status201Created);
+                    return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status201Created);
                 })
             .RequireAuthorization()
-            .Produces<ApiResponse<object>>(201)
+            .Produces<ApiResponse<Quest>>(201)
             .Produces<ApiResponse<object>>(400)
             .Produces<ApiResponse<object>>(401);
 
@@ -108,7 +110,10 @@ public static class QuestEndpoints
                         quest.Deadline = payload.Deadline;
                         quest.Category = payload.Category;
                         quest.Completed = payload.Completed;
+                        if (payload.Completed) quest.CompletedAt = DateTime.UtcNow;
                     }
+
+                    quest.UpdatedAt = DateTime.UtcNow;
 
                     await dbContext.SaveChangesAsync();
                     return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status200OK);
