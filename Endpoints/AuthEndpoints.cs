@@ -319,14 +319,27 @@ public static class AuthEndpoints
                         user = newUser;
                     }
 
-                    var loginInfo = new UserLoginInfo("Google",
-                        principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty, "Google");
-                    var loginResult = await userManager.AddLoginAsync(user, loginInfo);
-                    if (!loginResult.Succeeded)
+                    var providerKey = principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+                    var loginInfo = new UserLoginInfo("Google", providerKey, "Google");
+
+                    // Fetch the user's existing external logins from the database
+                    var existingLogins = await userManager.GetLoginsAsync(user);
+
+                    // Check if the Google login is already linked
+                    var isAlreadyLinked = existingLogins.Any(l =>
+                        l.LoginProvider == loginInfo.LoginProvider &&
+                        l.ProviderKey == loginInfo.ProviderKey);
+
+                    // Only add the login if it hasn't been linked yet
+                    if (!isAlreadyLinked)
                     {
-                        return TypedResults.Json(ApiResponse<object>.Fail("Failed to add login",
-                                loginResult.Errors.Select(e => e.Description).ToList()),
-                            statusCode: StatusCodes.Status400BadRequest);
+                        var loginResult = await userManager.AddLoginAsync(user, loginInfo);
+                        if (!loginResult.Succeeded)
+                        {
+                            return TypedResults.Json(data: ApiResponse<object>.Fail(message: "Failed to add login",
+                                    loginResult.Errors.Select(e => e.Description).ToList()),
+                                statusCode: StatusCodes.Status400BadRequest);
+                        }
                     }
 
                     await signInManager.SignInAsync(user, true);
