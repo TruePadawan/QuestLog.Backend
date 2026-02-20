@@ -23,7 +23,7 @@ if (questLogSettings is null)
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalReactApp", policy =>
+    options.AddPolicy("Frontend", policy =>
     {
         policy.WithOrigins(questLogSettings.FrontEndUrl)
             .AllowAnyHeader()
@@ -89,7 +89,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     else
     {
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SameSite = SameSiteMode.None;
     }
 
     // Cookie expires in 15 days of inactivity
@@ -118,7 +118,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 var app = builder.Build();
-app.UseCors("AllowLocalReactApp");
+app.UseCors("Frontend");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -128,6 +128,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapCharacterClassEndpoints();
