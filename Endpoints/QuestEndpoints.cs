@@ -110,7 +110,20 @@ public static class QuestEndpoints
                         quest.Deadline = payload.Deadline;
                         quest.Category = payload.Category;
                         quest.Completed = payload.Completed;
-                        if (payload.Completed) quest.CompletedAt = DateTime.UtcNow;
+                        if (payload.Completed)
+                        {
+                            quest.CompletedAt = DateTime.UtcNow;
+                            // Update adventurer's XP'
+                            var rewardXp = payload.DifficultyRating switch
+                            {
+                                DifficultyRating.Low => 200,
+                                DifficultyRating.Medium => 500,
+                                DifficultyRating.High => 1000,
+                                _ => 0
+                            };
+                            await dbContext.Adventurers.Where(a => a.UserId == quest.AdventurerId)
+                                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.Xp, a => a.Xp + rewardXp));
+                        }
                     }
 
                     quest.UpdatedAt = DateTime.UtcNow;
