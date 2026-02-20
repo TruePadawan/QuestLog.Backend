@@ -14,3 +14,5 @@ public record CreateAdventurerDto(
     [Required] string CharacterName,
     [Required] string CharacterClass
 );
+
+public record UpdateAdventurerDto([Required] [MaxLength(30)] string CharacterName);

@@ -7,7 +7,7 @@ namespace QuestLog.Backend.Models;
 public class Adventurer
 {
     [Key] public required string UserId { get; init; }
-    [MaxLength(30)] public required string CharacterName { get; init; }
+    [MaxLength(30)] public required string CharacterName { get; set; }
     public int CharacterClassId { get; init; }
     public required CharacterClass CharacterClass { get; init; }
     public int Xp { get; init; }
