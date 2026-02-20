@@ -25,7 +25,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins(questLogSettings.FrontEndUrl)
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "https://questlog-five.vercel.app",
+                questLogSettings.FrontEndUrl)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
