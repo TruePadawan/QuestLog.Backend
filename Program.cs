@@ -1,7 +1,5 @@
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using QuestLog.Backend.Database;
 using QuestLog.Backend.Endpoints;
 using QuestLog.Backend.Extensions;
@@ -47,14 +45,24 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
     })
     .AddCookie(IdentityConstants.ApplicationScheme)
+    // Temporary holding cookie for google auth
+    .AddCookie(IdentityConstants.ExternalScheme)
     .AddGoogle(googleOptions =>
     {
-        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        var clientId = builder.Configuration["Authentication:Google:ClientId"];
+        var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        if (clientId is null || clientSecret is null)
+        {
+            throw new InvalidOperationException("Google authentication is not configured");
+        }
+
+        googleOptions.ClientId = clientId;
+        googleOptions.ClientSecret = clientSecret;
+        googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
     });
 
 builder.Services.AddIdentityCore<User>(options =>

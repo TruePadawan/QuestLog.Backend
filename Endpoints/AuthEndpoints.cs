@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.WebUtilities;
@@ -261,6 +262,80 @@ public static class AuthEndpoints
                     statusCode: StatusCodes.Status200OK);
             })
             .Produces<ApiResponse<object>>(200);
+
+        authGroup.MapGet("/login/google",
+            (string returnUrl, LinkGenerator linkGenerator, SignInManager<User> signInManager, HttpContext context) =>
+            {
+                // Request a redirect to the external login provider.
+                // Keep track of the intended return URL for when the external login provider redirects back
+                var properties = signInManager.ConfigureExternalAuthenticationProperties("Google",
+                    linkGenerator.GetPathByName(context, "GoogleLoginCallback") + $"?returnUrl={returnUrl}");
+
+                // Start external google login flow
+                return TypedResults.Challenge(properties, ["Google"]);
+            });
+
+        // Google auth redirects back here
+        authGroup.MapGet("/login/google/callback",
+                async Task<IResult> (string returnUrl, HttpContext context, UserManager<User> userManager,
+                    SignInManager<User> signInManager) =>
+                {
+                    var result = await context.AuthenticateAsync(IdentityConstants.ExternalScheme);
+                    if (!result.Succeeded)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Authentication failed"),
+                            statusCode: StatusCodes.Status401Unauthorized);
+                    }
+
+                    var principal = result.Principal;
+                    if (principal == null)
+                    {
+                        return TypedResults.Json(
+                            ApiResponse<object>.Fail("Authentication failed, Claims Principal is null"),
+                            statusCode: StatusCodes.Status401Unauthorized);
+                    }
+
+                    var email = principal.FindFirstValue(ClaimTypes.Email);
+                    if (email == null)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Authentication failed, Email is null"),
+                            statusCode: StatusCodes.Status401Unauthorized);
+                    }
+
+                    // Create user if they don't exist
+                    var user = await userManager.FindByEmailAsync(email);
+                    if (user == null)
+                    {
+                        // Create user
+                        var newUser = new User { UserName = email, Email = email, EmailConfirmed = true };
+                        var createResult = await userManager.CreateAsync(newUser);
+                        if (!createResult.Succeeded)
+                        {
+                            return TypedResults.Json(ApiResponse<object>.Fail("Failed to create user",
+                                    createResult.Errors.Select(e => e.Description).ToList()),
+                                statusCode: StatusCodes.Status400BadRequest);
+                        }
+
+                        user = newUser;
+                    }
+
+                    var loginInfo = new UserLoginInfo("Google",
+                        principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty, "Google");
+                    var loginResult = await userManager.AddLoginAsync(user, loginInfo);
+                    if (!loginResult.Succeeded)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Failed to add login",
+                                loginResult.Errors.Select(e => e.Description).ToList()),
+                            statusCode: StatusCodes.Status400BadRequest);
+                    }
+
+                    await signInManager.SignInAsync(user, true);
+                    // delete temporary cookie used during external authentication
+                    await context.SignOutAsync(IdentityConstants.ExternalScheme);
+
+                    return TypedResults.Redirect(returnUrl);
+                })
+            .WithName("GoogleLoginCallback");
     }
 
     private static EmailMessage GetVerificationEmailMessage(string email, string callbackUrl)

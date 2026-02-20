@@ -52,9 +52,10 @@ public static class QuestEndpoints
 
         questGroup.MapGet("/",
                 async Task<IResult> (QuestLogDbContext dbContext, string? tag, string? category,
-                    bool? completed) =>
+                    bool? completed, ClaimsPrincipal user) =>
                 {
-                    var query = dbContext.Quests.AsQueryable();
+                    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var query = dbContext.Quests.Where(q => q.AdventurerId == userId).AsQueryable();
                     if (completed.HasValue)
                     {
                         query = query.Where(q => q.Completed == completed.Value);
@@ -75,25 +76,31 @@ public static class QuestEndpoints
             .RequireAuthorization()
             .Produces<List<Quest>>(200);
 
-        questGroup.MapGet("/{questId:int}", async Task<IResult> (int questId, QuestLogDbContext dbContext) =>
-            {
-                var quest = await dbContext.Quests.FirstOrDefaultAsync(q => q.Id == questId);
-                if (quest == null)
+        questGroup.MapGet("/{questId:int}",
+                async Task<IResult> (int questId, QuestLogDbContext dbContext, ClaimsPrincipal user) =>
                 {
-                    return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
-                        statusCode: StatusCodes.Status404NotFound);
-                }
+                    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var quest = await dbContext.Quests.FirstOrDefaultAsync(q =>
+                        q.Id == questId && q.AdventurerId == userId);
+                    if (quest == null)
+                    {
+                        return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
+                            statusCode: StatusCodes.Status404NotFound);
+                    }
 
-                return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status200OK);
-            })
+                    return TypedResults.Json(ApiResponse<Quest>.Ok(quest), statusCode: StatusCodes.Status200OK);
+                })
             .RequireAuthorization()
             .Produces<ApiResponse<object>>(404)
             .Produces<Quest>(200);
 
         questGroup.MapPatch("/{questId:int}",
-                async Task<IResult> (int questId, UpdateQuestDto payload, QuestLogDbContext dbContext) =>
+                async Task<IResult> (int questId, UpdateQuestDto payload, QuestLogDbContext dbContext,
+                    ClaimsPrincipal user) =>
                 {
-                    var quest = await dbContext.Quests.FirstOrDefaultAsync(q => q.Id == questId);
+                    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var quest = await dbContext.Quests.FirstOrDefaultAsync(q =>
+                        q.Id == questId && q.AdventurerId == userId);
                     if (quest == null)
                     {
                         return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
@@ -139,13 +146,8 @@ public static class QuestEndpoints
                 async Task<IResult> (int questId, ClaimsPrincipal user, QuestLogDbContext dbContext) =>
                 {
                     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (userId == null)
-                    {
-                        return TypedResults.Json(ApiResponse<object>.Fail("User not logged in"),
-                            statusCode: StatusCodes.Status401Unauthorized);
-                    }
-
-                    var rowsDeleted = await dbContext.Quests.Where(q => q.Id == questId).ExecuteDeleteAsync();
+                    var rowsDeleted = await dbContext.Quests.Where(q => q.Id == questId && q.AdventurerId == userId)
+                        .ExecuteDeleteAsync();
                     if (rowsDeleted == 0)
                     {
                         return TypedResults.Json(ApiResponse<object>.Fail("Quest not found"),
@@ -155,7 +157,6 @@ public static class QuestEndpoints
                     return TypedResults.Json(ApiResponse<object>.Ok(null), statusCode: StatusCodes.Status200OK);
                 }).RequireAuthorization()
             .Produces<ApiResponse<object>>(200)
-            .Produces<ApiResponse<object>>(401)
             .Produces<ApiResponse<object>>(404);
     }
 }
