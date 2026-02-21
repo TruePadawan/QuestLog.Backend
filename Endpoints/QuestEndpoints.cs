@@ -11,7 +11,7 @@ public static class QuestEndpoints
 {
     public static void MapQuestEndpoints(this WebApplication app)
     {
-        var questGroup = app.MapGroup("/quests");
+        var questGroup = app.MapGroup("/api/quests");
 
         questGroup.MapPost("/",
                 async Task<IResult> (CreateQuestDto payload, QuestLogDbContext dbContext, ClaimsPrincipal user) =>

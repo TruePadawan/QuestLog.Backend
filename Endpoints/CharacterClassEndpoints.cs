@@ -9,7 +9,7 @@ public static class CharacterClassEndpoints
 {
     public static void MapCharacterClassEndpoints(this WebApplication app)
     {
-        var characterClassGroup = app.MapGroup("/character-classes");
+        var characterClassGroup = app.MapGroup("/api/character-classes");
 
         characterClassGroup.MapGet("/", async (QuestLogDbContext dbContext) =>
             {

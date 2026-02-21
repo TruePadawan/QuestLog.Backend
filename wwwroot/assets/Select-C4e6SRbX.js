@@ -1,0 +1,1 @@
+import{j as c}from"./index-BM71IHYH.js";const l="_select_76gfc_2",i="_option_76gfc_15",n={select:l,option:i};function a(s){const{className:t,children:e,...o}=s;return c.jsx("option",{className:`${n.option} ${t||""}`,...o,children:e})}function p(s){const{children:t,className:e,...o}=s;return c.jsx("select",{className:`${n.select} ${e||""}`,...o,children:t})}export{a as O,p as S};

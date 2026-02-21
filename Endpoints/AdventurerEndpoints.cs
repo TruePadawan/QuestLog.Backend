@@ -11,7 +11,7 @@ public static class AdventurerEndpoints
 {
     public static void MapAdventurerEndpoints(this WebApplication app)
     {
-        var adventurerGroup = app.MapGroup("/adventurers");
+        var adventurerGroup = app.MapGroup("/api/adventurers");
 
         adventurerGroup.MapPost("/",
                 async (QuestLogDbContext dbContext, ClaimsPrincipal user, CreateAdventurerDto payload) =>

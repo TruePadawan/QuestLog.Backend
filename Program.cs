@@ -121,7 +121,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 var app = builder.Build();
-app.UseCors("Frontend");
+app.UseHttpsRedirection();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// app.UseCors("Frontend");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -129,8 +135,6 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
     app.MapScalarApiReference();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -140,4 +144,6 @@ app.MapCharacterClassEndpoints();
 app.MapAdventurerEndpoints();
 app.MapQuestEndpoints();
 
+// Hand a route request to React if .NET doesn't find a matching API endpoint
+app.MapFallbackToFile("index.html");
 app.Run();
