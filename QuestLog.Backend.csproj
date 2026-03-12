@@ -20,4 +20,50 @@
         <PackageReference Include="Scalar.AspNetCore" Version="2.12.40" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\assets\AtSign-C5idZA0X.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\auth.api-BD3ZayB1.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Button-BZlZGBbg.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Button-DjVsqX09.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\CheckCircle-dwEPAdtQ.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\field-eIo_uTst.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\FormInputField-B33G3mA_.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\FormInputField-Xka4Ls7u.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\IconoirContext-DnFuTd40.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-0xj1_BGF.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-B6oFiGU9.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BB1IKlgX.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BINp1QLp.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BM71IHYH.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BNQJNmq2.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BxrgrfHJ.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-BXTRhhPC.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-D6dlRveR.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-DLu4jb9-.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-DnS1JJTB.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-DOcRxfTV.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-EFZms_H0.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-IIJf9qS5.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-kaALaHeJ.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-LQdrq7Nb.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\index-XGZyWgJn.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Key-DbvB58lg.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Loader-xl498cTG.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\logo-BIfEBSO-.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\quest.api-JQDOGfAe.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\QuestItem-CFyMUjF_.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\QuestItem-DSTA1UAr.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\route-bxery1B7.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\route-SM5gaoJ3.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Select-C4e6SRbX.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Select-Dqdbshqy.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\SendVerificationLink-WQ8Z2jfc.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\useAuth-BrmHBAwv.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\useQuery-Bo-X5PFM.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\utils-Dhn_WXxr.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\Xmark-DvtNZVn5.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\_questId-DIfxndQH.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\assets\_tag-DY0eQyUO.js" />
+    </ItemGroup>
+
 </Project>
